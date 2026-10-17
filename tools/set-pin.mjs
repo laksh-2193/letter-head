@@ -1,13 +1,15 @@
-// Sets the PIN for Letterhead Docs: writes lakshaykumar.com/letterhead/k/<pbkdf2(pin)>
-// and removes any old PIN file. Run: npm run set-pin   (then commit & push the site repo)
+// Sets the PIN for Letterhead Docs: writes k/<pbkdf2(pin)> in this repo and in the
+// lakshaykumar.com/letterhead copy (if present), replacing any old PIN file.
+// Run: npm run set-pin, then commit & push.
 import { pbkdf2Sync } from 'node:crypto'
-import { mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const SALT = 'lakshaykumar.com/letterhead:v1' // must match PIN_SALT in src/app.js
 const ITER = 310000                            // must match PIN_ITER in src/app.js
-const dir = join(dirname(fileURLToPath(import.meta.url)), '../../lakshaykumar.com/letterhead/k')
+const root = join(dirname(fileURLToPath(import.meta.url)), '..')
+const dirs = [join(root, 'k'), join(root, '../lakshaykumar.com/letterhead/k')]
 
 function ask(q) {
   return new Promise(res => {
@@ -29,7 +31,11 @@ const pin = await ask('New PIN: ')
 if (pin.length < 4) { console.error('PIN must be at least 4 characters.'); process.exit(1) }
 if (await ask('Repeat PIN: ') !== pin) { console.error('PINs do not match.'); process.exit(1) }
 const hash = pbkdf2Sync(pin, SALT, ITER, 32, 'sha256').toString('hex')
-mkdirSync(dir, { recursive: true })
-for (const f of readdirSync(dir)) rmSync(join(dir, f))
-writeFileSync(join(dir, hash), 'ok\n')
-console.log('PIN set. Now commit and push the lakshaykumar.com repo for it to take effect.')
+for (const dir of dirs) {
+  if (dir !== dirs[0] && !existsSync(join(dir, '..'))) continue
+  mkdirSync(dir, { recursive: true })
+  for (const f of readdirSync(dir)) rmSync(join(dir, f))
+  writeFileSync(join(dir, hash), 'ok\n')
+  console.log('Wrote', join(dir, hash.slice(0, 12) + '…'))
+}
+console.log('PIN set. Commit and push for it to take effect.')
