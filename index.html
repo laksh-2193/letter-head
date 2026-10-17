@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Letterhead Docs</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="locked">
+<div class="lock" id="lock" hidden>
+  <form id="lockForm" autocomplete="off">
+    <div class="lock-mark">LK<i>.</i></div>
+    <h1>Letterhead Docs</h1>
+    <label for="pinIn">Enter PIN to open</label>
+    <input id="pinIn" type="password" inputmode="numeric" autocomplete="current-password" maxlength="32" required>
+    <button class="tb-btn primary" id="pinBtn" type="submit">Unlock</button>
+    <p id="lockMsg" role="status"></p>
+  </form>
+</div>
+<div id="app">
+
+  <header class="topbar">
+    <button class="icon-btn" id="toggleLeft" title="Documents (⌘\)" aria-label="Toggle documents"></button>
+    <div class="mark">LK<i>.</i></div>
+    <input id="docTitle" class="doc-title" spellcheck="false" aria-label="Document title">
+    <span id="saveState" class="save-state">Saved</span>
+    <div class="spacer"></div>
+    <button class="tb-btn" id="btnFind" title="Find &amp; replace (⌘F)">Find</button>
+    <button class="tb-btn" id="btnLock" title="Lock">Lock</button>
+    <button class="tb-btn" id="btnBrand" title="Letterhead settings">Letterhead</button>
+    <div class="menu-wrap">
+      <button class="tb-btn" id="btnFile">File ▾</button>
+      <div class="menu" id="fileMenu" hidden>
+        <button data-act="new">New document…<kbd>⌥N</kbd></button>
+        <button data-act="duplicate">Duplicate</button>
+        <hr>
+        <button data-act="open-docx">Open Word (.docx)…</button>
+        <button data-act="open-html">Open HTML…</button>
+        <button data-act="restore">Restore backup (.json)…</button>
+        <hr>
+        <button data-act="pdf">Export PDF<kbd>⌘P</kbd></button>
+        <button data-act="doc">Export Word (.doc)</button>
+        <button data-act="html">Export HTML</button>
+        <button data-act="backup">Backup all documents (.json)</button>
+      </div>
+    </div>
+    <button class="tb-btn primary" id="btnPdf" title="Export PDF (⌘P)">Export PDF</button>
+  </header>
+
+  <div class="ribbon" id="ribbon" role="toolbar" aria-label="Formatting"></div>
+
+  <div class="findbar" id="findbar" hidden>
+    <input id="findInput" placeholder="Find" spellcheck="false">
+    <input id="replInput" placeholder="Replace with" spellcheck="false">
+    <span id="findCount" class="find-count"></span>
+    <button class="tb-btn" id="findPrev" title="Previous (⇧Enter)">↑</button>
+    <button class="tb-btn" id="findNext" title="Next (Enter)">↓</button>
+    <button class="tb-btn" id="replOne">Replace</button>
+    <button class="tb-btn" id="replAll">Replace all</button>
+    <button class="icon-btn" id="findClose" aria-label="Close find">×</button>
+  </div>
+
+  <div class="main">
+    <aside class="left" id="left">
+      <div class="tabs">
+        <button class="tab on" data-tab="docs">Documents</button>
+        <button class="tab" data-tab="outline">Outline</button>
+      </div>
+      <div class="pane" id="paneDocs">
+        <div class="docs-head">
+          <input id="docSearch" placeholder="Search documents" spellcheck="false">
+          <button class="tb-btn primary" id="btnNew" title="New document">＋ New</button>
+        </div>
+        <ul id="docList" class="doc-list"></ul>
+      </div>
+      <div class="pane" id="paneOutline" hidden>
+        <ul id="outline" class="outline"></ul>
+        <p class="empty-note" id="outlineEmpty">Add headings (H1–H3) and they show up here.</p>
+      </div>
+    </aside>
+
+    <div class="canvas" id="canvas">
+      <div id="zoomwrap">
+        <div id="paper">
+          <div id="sheets"></div>
+          <div id="host"></div>
+          <div id="masks"></div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="right" id="brandPanel" hidden>
+      <div class="panel-head"><b>Letterhead</b><button class="icon-btn" id="brandClose" aria-label="Close">×</button></div>
+      <div class="panel-body" id="brandBody"></div>
+    </aside>
+  </div>
+
+  <footer class="status">
+    <span id="stPage">Page 1 of 1</span>
+    <span id="stWords">0 words</span>
+    <span class="spacer"></span>
+    <button class="icon-btn" id="zoomOut" aria-label="Zoom out">−</button>
+    <input type="range" id="zoom" min="50" max="200" step="10" value="100" aria-label="Zoom">
+    <button class="icon-btn" id="zoomIn" aria-label="Zoom in">+</button>
+    <button class="tb-btn" id="zoomFit" title="Fit width">Fit</button>
+    <span id="zoomVal">100%</span>
+  </footer>
+</div>
+
+<div class="pop" id="pop" hidden></div>
+<div class="modal-bg" id="modal" hidden><div class="modal" id="modalBody"></div></div>
+<div id="measure" aria-hidden="true"></div>
+<input type="file" id="fileIn" hidden>
+<script src="app.js"></script>
+</body>
+</html>

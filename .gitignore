@@ -1,0 +1,5 @@
+node_modules/
+.DS_Store
+# personal documents / exports
+*.pdf
+Counsellor_Shortlist_Letter.html
