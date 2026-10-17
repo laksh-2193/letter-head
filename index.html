@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <title>Letterhead Docs</title>
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles.css?v=mvcgad3u">
 </head>
 <body class="locked">
 <div class="lock" id="lock" hidden>
@@ -32,6 +32,10 @@
     <div class="menu-wrap">
       <button class="tb-btn" id="btnFile">File ▾</button>
       <div class="menu" id="fileMenu" hidden>
+        <button data-act="find" class="m-only">Find &amp; replace</button>
+        <button data-act="brand" class="m-only">Letterhead settings</button>
+        <button data-act="lock" class="m-only">Lock</button>
+        <hr class="m-only">
         <button data-act="new">New document…<kbd>⌥N</kbd></button>
         <button data-act="duplicate">Duplicate</button>
         <hr>
@@ -45,7 +49,7 @@
         <button data-act="backup">Backup all documents (.json)</button>
       </div>
     </div>
-    <button class="tb-btn primary" id="btnPdf" title="Export PDF (⌘P)">Export PDF</button>
+    <button class="tb-btn primary" id="btnPdf" title="Export PDF (⌘P)"><span class="long">Export </span>PDF</button>
   </header>
 
   <div class="ribbon" id="ribbon" role="toolbar" aria-label="Formatting"></div>
@@ -62,6 +66,7 @@
   </div>
 
   <div class="main">
+    <div class="scrim" id="scrim" hidden></div>
     <aside class="left" id="left">
       <div class="tabs">
         <button class="tab on" data-tab="docs">Documents</button>
@@ -112,6 +117,6 @@
 <div class="modal-bg" id="modal" hidden><div class="modal" id="modalBody"></div></div>
 <div id="measure" aria-hidden="true"></div>
 <input type="file" id="fileIn" hidden>
-<script src="app.js"></script>
+<script src="app.js?v=mvcgad3u"></script>
 </body>
 </html>

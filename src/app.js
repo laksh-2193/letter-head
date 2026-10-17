@@ -228,6 +228,7 @@ let index = { docs: [], current: null }       // [{id,title,updated}]
 let doc = null                                  // current doc record
 let editor = null
 let zoom = prefs.get('zoom', 1)
+let autoFit = prefs.get('autoFit', true)   // follow the window width until the user zooms by hand
 let printing = false
 const geom = { top1: 0, topC: 0, bottom: 0, gap: SCREEN_GAP, pages: 1, key: '' }
 
@@ -665,7 +666,7 @@ function openPop(anchor, html, onReady) {
   const pop = $('pop')
   pop.innerHTML = html; pop.hidden = false; popAnchor = anchor
   const r = anchor.getBoundingClientRect()
-  pop.style.left = Math.min(r.left, innerWidth - pop.offsetWidth - 8) + 'px'
+  pop.style.left = Math.max(8, Math.min(r.left, innerWidth - pop.offsetWidth - 8)) + 'px'
   pop.style.top = r.bottom + 6 + 'px'
   onReady?.(pop)
 }
@@ -860,7 +861,11 @@ function bindBrandPanel() {
     if (e.target.id === 'brandReset' && confirm('Reset the letterhead to its default settings?')) { brand = { ...BRAND_DEFAULTS }; applyBrand(); saveBrand(); buildBrandPanel() }
   })
 }
-function toggleBrand(show = $('brandPanel').hidden) { $('brandPanel').hidden = !show; if (show) buildBrandPanel(); fitIfNeeded() }
+function toggleBrand(show = $('brandPanel').hidden) {
+  $('brandPanel').hidden = !show; if (show) buildBrandPanel()
+  if (show && narrow()) $('left').classList.add('hidden')
+  syncScrim(); if (!narrow()) fitIfNeeded()
+}
 
 /* =========================================================================
    Find & replace
@@ -969,6 +974,7 @@ const FILE_ACTS = {
   new: newDocDialog, duplicate: () => duplicateDoc(doc.id),
   'open-docx': () => pickFile('.docx', importDocx), 'open-html': () => pickFile('.html,.htm', importHTML),
   restore: () => pickFile('application/json,.json', restoreBackup),
+  find: () => openFind(), brand: () => toggleBrand(true), lock: () => lockNow(),
   pdf: () => window.print(), doc: exportWord, html: exportHTML, backup: backupAll,
 }
 
@@ -983,13 +989,23 @@ function sizeZoom() {
   $('zoomwrap').style.height = h * z + 'px'
 }
 function setZoom(z) {
-  zoom = Math.max(0.5, Math.min(2, Math.round(z * 100) / 100))
+  zoom = Math.max(0.3, Math.min(2, Math.round(z * 100) / 100))
   prefs.set('zoom', zoom)
   $('zoom').value = Math.round(zoom * 100); $('zoomVal').textContent = Math.round(zoom * 100) + '%'
   sizeZoom(); updatePageIndicator()
 }
-function fitWidth() { setZoom(Math.min(1.5, ($('canvas').clientWidth - 48) / PAGE_W)) }
-function fitIfNeeded() { requestAnimationFrame(() => { if (PAGE_W * zoom > $('canvas').clientWidth - 48) fitWidth() }) }
+const narrow = () => matchMedia('(max-width: 900px)').matches
+const canvasRoom = () => $('canvas').clientWidth - (narrow() ? 24 : 48)
+function fitWidth() { setZoom(Math.min(1.5, canvasRoom() / PAGE_W)) }
+function setAuto(v) { autoFit = v; prefs.set('autoFit', v) }
+function fitIfNeeded() {
+  requestAnimationFrame(() => {
+    if (autoFit) setZoom(Math.min(1, canvasRoom() / PAGE_W))
+    else if (PAGE_W * zoom > canvasRoom()) fitWidth()
+  })
+}
+// on small screens the side panels float over the page; a scrim closes them
+function syncScrim() { $('scrim').hidden = !(narrow() && (!$('left').classList.contains('hidden') || !$('brandPanel').hidden)) }
 function updatePageIndicator() {
   const c = $('canvas'), n = geom.pages
   const step = (PAGE_H + geom.gap) * zoom
@@ -1007,8 +1023,14 @@ window.addEventListener('afterprint', () => { printing = false; geom.key = ''; p
    ========================================================================= */
 function bindUI() {
   $('toggleLeft').innerHTML = icon('sidebar')
-  $('toggleLeft').onclick = () => { $('left').classList.toggle('hidden'); prefs.set('left', !$('left').classList.contains('hidden')) }
-  if (!prefs.get('left', true)) $('left').classList.add('hidden')
+  $('toggleLeft').onclick = () => {
+    $('left').classList.toggle('hidden')
+    if (narrow()) { if (!$('left').classList.contains('hidden')) $('brandPanel').hidden = true }
+    else { prefs.set('left', !$('left').classList.contains('hidden')); fitIfNeeded() }
+    syncScrim()
+  }
+  if (narrow() || !prefs.get('left', true)) $('left').classList.add('hidden')
+  $('scrim').onclick = () => { $('left').classList.add('hidden'); $('brandPanel').hidden = true; syncScrim() }
 
   $('docTitle').addEventListener('input', e => { doc.title = e.target.value; document.title = doc.title || 'Untitled'; markDirty() })
   $('docTitle').addEventListener('keydown', e => { if (e.key === 'Enter') editor.commands.focus() })
@@ -1025,11 +1047,15 @@ function bindUI() {
     const a = e.target.closest('[data-a]')?.dataset.a
     if (a === 'dup') duplicateDoc(li.dataset.id)
     else if (a === 'del') deleteDoc(li.dataset.id)
-    else if (li.dataset.id !== doc?.id) openDoc(li.dataset.id)
+    else {
+      if (li.dataset.id !== doc?.id) openDoc(li.dataset.id)
+      if (narrow()) { $('left').classList.add('hidden'); syncScrim() }
+    }
   })
   $('outline').addEventListener('click', e => {
     const li = e.target.closest('li'); if (!li) return
     editor.chain().focus().setTextSelection(+li.dataset.pos + 1).scrollIntoView().run()
+    if (narrow()) { $('left').classList.add('hidden'); syncScrim() }
   })
 
   $('btnBrand').onclick = () => toggleBrand()
@@ -1046,13 +1072,15 @@ function bindUI() {
   $('findNext').onclick = () => stepFind(1); $('findPrev').onclick = () => stepFind(-1)
   $('replOne').onclick = replaceOne; $('replAll').onclick = replaceAll; $('findClose').onclick = closeFind
 
-  $('zoom').addEventListener('input', e => setZoom(e.target.value / 100))
-  $('zoomIn').onclick = () => setZoom(zoom + 0.1); $('zoomOut').onclick = () => setZoom(zoom - 0.1); $('zoomFit').onclick = fitWidth
+  $('zoom').addEventListener('input', e => { setAuto(false); setZoom(e.target.value / 100) })
+  $('zoomIn').onclick = () => { setAuto(false); setZoom(zoom + 0.1) }
+  $('zoomOut').onclick = () => { setAuto(false); setZoom(zoom - 0.1) }
+  $('zoomFit').onclick = () => { setAuto(true); fitIfNeeded() }
   $('canvas').addEventListener('scroll', updatePageIndicator, { passive: true })
   $('canvas').addEventListener('mousedown', e => {
     if (e.target === $('canvas') || e.target === $('host') || e.target === $('zoomwrap')) { e.preventDefault(); editor.commands.focus('end') }
   })
-  window.addEventListener('resize', debounce(updatePageIndicator, 100))
+  window.addEventListener('resize', debounce(() => { syncScrim(); fitIfNeeded(); updatePageIndicator() }, 120))
 
   document.addEventListener('keydown', e => {
     const mod = e.metaKey || e.ctrlKey
@@ -1078,7 +1106,7 @@ function makeResizable(panel, side, key, min, max) {
     const move = ev => { panel.style.width = Math.max(min, Math.min(max, w0 + (side === 'left' ? x0 - ev.clientX : ev.clientX - x0))) + 'px' }
     const up = () => {
       h.removeEventListener('pointermove', move); document.body.classList.remove('resizing')
-      prefs.set(key, panel.offsetWidth); updatePageIndicator()
+      prefs.set(key, panel.offsetWidth); fitIfNeeded(); updatePageIndicator()
     }
     h.addEventListener('pointermove', move)
     h.addEventListener('pointerup', up, { once: true })
@@ -1153,7 +1181,7 @@ async function init() {
   } else {
     await openDoc(index.docs.some(d => d.id === index.current) ? index.current : index.docs[0].id)
   }
-  if (PAGE_W * zoom > $('canvas').clientWidth - 48) fitWidth()
+  fitIfNeeded()
   if (store.broken) setSaveState('Storage unavailable — use File › Backup')
   document.fonts?.addEventListener?.('loadingdone', () => { geom.key = ''; schedulePaginate() })
 }

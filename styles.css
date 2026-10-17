@@ -18,7 +18,8 @@ body{font:400 13px/1.4 'Space Grotesk',system-ui,sans-serif;background:var(--ui-
 button{font:inherit;color:inherit}
 kbd{font:400 10px 'JetBrains Mono',monospace;color:var(--ui-mute);margin-left:auto;padding-left:16px}
 
-#app{display:grid;grid-template-rows:auto auto auto minmax(0,1fr) auto;grid-template-columns:minmax(0,1fr);height:100vh}
+#app{display:grid;grid-template-rows:auto auto auto minmax(0,1fr) auto;grid-template-columns:minmax(0,1fr);height:100vh;height:100dvh}
+.topbar{grid-row:1}.ribbon{grid-row:2}.findbar{grid-row:3}.main{grid-row:4}.status{grid-row:5}
 
 /* ---------- top bar ---------- */
 .topbar{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--ui-panel);border-bottom:1px solid var(--ui-line)}
@@ -260,7 +261,41 @@ body.resizing{cursor:col-resize;user-select:none}
   .ProseMirror .selectedCell::after,.column-resize-handle{display:none}
   *{print-color-adjust:exact;-webkit-print-color-adjust:exact}
 }
-@media (max-width:900px){.left{position:absolute;z-index:40;height:calc(100vh - 140px)}.right{position:absolute;right:0;z-index:40;height:calc(100vh - 140px)}}
+
+/* ---------- responsive ---------- */
+.menu button.m-only,.menu hr.m-only{display:none}
+.scrim{position:absolute;inset:0;background:rgba(10,10,11,.28);z-index:39}
+@media (max-width:900px){
+  .main{position:relative}
+  .left,.right{position:absolute;top:0;bottom:0;z-index:40;box-shadow:0 0 40px rgba(0,0,0,.18)}
+  .left{left:0;width:min(300px,85vw)!important}
+  .right{right:0;width:min(400px,100vw)!important}
+  .resizer{display:none}
+  .ribbon{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .ribbon::-webkit-scrollbar{display:none}
+  .grp{flex:none}
+  .canvas{padding:12px 12px 40px}
+}
+@media (max-width:640px){
+  .topbar{gap:4px;padding:6px 8px}
+  .mark{display:none}
+  .doc-title{flex:1;width:auto;min-width:0;padding:5px 6px}
+  .topbar .spacer,.save-state,#btnFind,#btnLock,#btnBrand,.tb-btn .long{display:none}
+  .menu button.m-only,.menu hr.m-only{display:flex}
+  .menu{position:fixed;right:8px;top:48px;max-height:calc(100vh - 60px);overflow:auto}
+  .grp .lbl{display:none}
+  .rb{min-width:34px;height:34px}
+  .sel{height:34px}
+  .findbar{flex-wrap:wrap;padding:6px 8px}
+  .findbar input{flex:1 1 40%;width:auto;min-width:0}
+  .status{gap:8px;padding:4px 8px}
+  .status #zoom,#zoomVal{display:none}
+  .modal{padding:18px}
+  .tpl-grid{grid-template-columns:1fr 1fr}
+  .lock input{font-size:22px}
+}
+@media (max-width:420px){#stWords{display:none}}
+@media (hover:none){.doc-list .acts{display:flex}}
 
 /* ---------- PIN lock ---------- */
 body.locked #app{visibility:hidden}
